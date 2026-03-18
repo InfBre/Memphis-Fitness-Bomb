@@ -1,6 +1,5 @@
 import { motion } from "motion/react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
-import { Trash2 } from "lucide-react";
 import MemphisCard from "./MemphisCard";
 import { ExerciseEntry, WeightEntry } from "../types";
 import { format, startOfWeek, endOfWeek, isWithinInterval, subMonths, isAfter, getDay, addDays } from "date-fns";
@@ -9,11 +8,9 @@ interface DashboardProps {
   exercises: ExerciseEntry[];
   weights: WeightEntry[];
   userId?: string;
-  onDeleteExercise: (id: string) => void;
-  onDeleteWeight: (id: string) => void;
 }
 
-export default function Dashboard({ exercises, weights, userId, onDeleteExercise, onDeleteWeight }: DashboardProps) {
+export default function Dashboard({ exercises, weights, userId }: DashboardProps) {
   const now = new Date();
   const weekStart = startOfWeek(now, { weekStartsOn: 0 });
   const weekEnd = endOfWeek(now, { weekStartsOn: 0 });
@@ -51,105 +48,99 @@ export default function Dashboard({ exercises, weights, userId, onDeleteExercise
     weight: w.weight,
   }));
 
+  const totalDuration = weeklyExercises.reduce((acc, curr) => acc + curr.duration, 0);
+  const totalCalories = weeklyExercises.reduce((acc, curr) => acc + (curr.calories || 0), 0);
+  const latestWeight = userWeights.length > 0 ? userWeights.sort((a, b) => b.timestamp - a.timestamp)[0].weight : null;
+
   return (
-    <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <MemphisCard color="mint" className="rotate-1">
-        <div className="flex justify-between items-start mb-6">
-          <h2 className="text-2xl font-black uppercase tracking-tighter">Weekly Activity (min)</h2>
-          <span className="text-xs font-bold bg-black text-white px-2 py-1 uppercase">
-            {format(weekStart, "MMM dd")} - {format(weekEnd, "MMM dd")}
-          </span>
+    <div className="min-h-[calc(100vh-180px)] lg:h-[calc(100vh-180px)] flex flex-col p-4 md:p-8 max-w-7xl mx-auto w-full gap-6 overflow-y-auto lg:overflow-hidden">
+      {/* Welcome & Quick Stats Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 flex-shrink-0">
+        <div className="space-y-1">
+          <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tighter -rotate-1">
+            Weekly <span className="text-coral">Overview</span>
+          </h2>
+          <p className="font-bold uppercase tracking-widest text-[10px] opacity-60 italic">
+            {format(weekStart, "MMMM dd")} — {format(weekEnd, "MMMM dd")}
+          </p>
         </div>
-        <div className="h-64 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={exerciseData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#000" />
-              <XAxis dataKey="name" stroke="#000" tick={{ fontWeight: "bold" }} />
-              <YAxis stroke="#000" tick={{ fontWeight: "bold" }} />
-              <Tooltip 
-                contentStyle={{ backgroundColor: "#FFF700", border: "4px solid black", fontWeight: "bold" }}
-                labelFormatter={(label, payload) => {
-                  const item = payload[0]?.payload;
-                  return item ? `${label} (${item.date})` : label;
-                }}
-              />
-              <Bar dataKey="time" fill="#FF7F50" stroke="#000" strokeWidth={2} />
-            </BarChart>
-          </ResponsiveContainer>
+        
+        {/* Quick Stats Grid - Compact */}
+        <div className="flex gap-4">
+          {[
+            { label: "Minutes", value: totalDuration, unit: "min", color: "mint" },
+            { label: "Calories", value: totalCalories, unit: "kcal", color: "lemon" },
+          ].map((stat, i) => (
+            <motion.div
+              key={stat.label}
+              initial={{ x: 20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: i * 0.1 }}
+              className={`bg-${stat.color} border-4 border-black px-4 py-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col justify-center ${i % 2 === 0 ? 'rotate-1' : '-rotate-1'}`}
+            >
+              <p className="text-[10px] font-black uppercase opacity-70 leading-none mb-1">{stat.label}</p>
+              <p className="text-xl md:text-2xl font-black tracking-tighter leading-none">
+                {stat.value}<span className="text-[10px] ml-1 uppercase">{stat.unit}</span>
+              </p>
+            </motion.div>
+          ))}
         </div>
-      </MemphisCard>
+      </div>
 
-      <MemphisCard color="lemon" className="-rotate-1">
-        <div className="flex justify-between items-start mb-6">
-          <h2 className="text-2xl font-black uppercase tracking-tighter">Weight Progress (kg)</h2>
-          <span className="text-xs font-bold bg-black text-white px-2 py-1 uppercase">
-            {format(weekStart, "MMM dd")} - {format(weekEnd, "MMM dd")}
-          </span>
-        </div>
-        <div className="h-64 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={weightData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#000" />
-              <XAxis dataKey="date" stroke="#000" tick={{ fontWeight: "bold" }} />
-              <YAxis stroke="#000" tick={{ fontWeight: "bold" }} />
-              <Tooltip 
-                contentStyle={{ backgroundColor: "#AAF0D1", border: "4px solid black", fontWeight: "bold" }}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="weight" 
-                stroke="#FF7F50" 
-                strokeWidth={4} 
-                dot={{ r: 6, fill: "#000", stroke: "#000" }} 
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </MemphisCard>
+      {/* Charts Grid - Adjusted for one screen on large displays, scrollable on small */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 min-h-0">
+        <MemphisCard color="mint" className="rotate-1 flex flex-col h-full min-h-[300px] lg:min-h-0 overflow-hidden">
+          <div className="flex justify-between items-start mb-4 border-b-4 border-black pb-2">
+            <h3 className="text-xl font-black uppercase tracking-tighter">Activity Distribution</h3>
+            <div className="bg-black text-white px-2 py-0.5 text-[10px] font-black uppercase">Weekly</div>
+          </div>
+          <div className="flex-1 w-full min-h-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={exerciseData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#000" vertical={false} opacity={0.2} />
+                <XAxis dataKey="name" stroke="#000" tick={{ fontWeight: "bold", fontSize: 10 }} axisLine={{ strokeWidth: 2 }} />
+                <YAxis stroke="#000" tick={{ fontWeight: "bold", fontSize: 10 }} axisLine={{ strokeWidth: 2 }} />
+                <Tooltip 
+                  cursor={{ fill: 'rgba(0,0,0,0.1)' }}
+                  contentStyle={{ backgroundColor: "#FFF700", border: "4px solid black", fontWeight: "bold", boxShadow: '4px 4px 0px 0px rgba(0,0,0,1)' }}
+                  labelFormatter={(label, payload) => {
+                    const item = payload[0]?.payload;
+                    return item ? `${label} (${item.date})` : label;
+                  }}
+                />
+                <Bar dataKey="time" fill="#FF7F50" stroke="#000" strokeWidth={2} radius={[2, 2, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </MemphisCard>
 
-      <MemphisCard color="white" className="lg:col-span-2 rotate-1">
-        <h2 className="text-2xl font-black mb-6 uppercase tracking-tighter">Recent Exercise Records</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-coral text-white border-4 border-black">
-                <th className="p-3 text-left border-r-4 border-black">Date</th>
-                <th className="p-3 text-left border-r-4 border-black">Type</th>
-                <th className="p-3 text-left border-r-4 border-black">Duration</th>
-                <th className="p-3 text-left border-r-4 border-black">User</th>
-                <th className="p-3 text-center">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {userExercises.length > 0 ? (
-                userExercises.slice(0, 5).map((e, i) => (
-                  <tr key={e.id} className={i % 2 === 0 ? "bg-mint/20" : "bg-white"}>
-                    <td className="p-3 border-4 border-black font-bold">{format(new Date(e.timestamp), "yyyy-MM-dd")}</td>
-                    <td className="p-3 border-4 border-black font-bold">{e.type}</td>
-                    <td className="p-3 border-4 border-black font-bold">{e.duration} min</td>
-                    <td className="p-3 border-4 border-black font-bold">{e.userName}</td>
-                    <td className="p-3 border-4 border-black text-center">
-                      <button 
-                        onClick={() => onDeleteExercise(e.id)}
-                        className="p-2 bg-coral border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all"
-                      >
-                        <Trash2 size={16} className="text-white" />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={5} className="p-8 text-center font-bold text-xl uppercase opacity-50">
-                    No records found yet. Go to "Log" to add some!
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </MemphisCard>
-
+        <MemphisCard color="lemon" className="-rotate-1 flex flex-col h-full min-h-[300px] lg:min-h-0 overflow-hidden">
+          <div className="flex justify-between items-start mb-4 border-b-4 border-black pb-2">
+            <h3 className="text-xl font-black uppercase tracking-tighter">Weight Trend</h3>
+            <div className="bg-black text-white px-2 py-0.5 text-[10px] font-black uppercase">Weekly</div>
+          </div>
+          <div className="flex-1 w-full min-h-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={weightData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#000" vertical={false} opacity={0.2} />
+                <XAxis dataKey="date" stroke="#000" tick={{ fontWeight: "bold", fontSize: 10 }} axisLine={{ strokeWidth: 2 }} />
+                <YAxis stroke="#000" tick={{ fontWeight: "bold", fontSize: 10 }} axisLine={{ strokeWidth: 2 }} domain={['dataMin - 1', 'dataMax + 1']} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: "#AAF0D1", border: "4px solid black", fontWeight: "bold", boxShadow: '4px 4px 0px 0px rgba(0,0,0,1)' }}
+                />
+                <Line 
+                  type="stepAfter" 
+                  dataKey="weight" 
+                  stroke="#FF7F50" 
+                  strokeWidth={4} 
+                  dot={{ r: 6, fill: "#000", stroke: "#000", strokeWidth: 2 }} 
+                  activeDot={{ r: 8, fill: "#FF7F50", stroke: "#000", strokeWidth: 2 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </MemphisCard>
+      </div>
     </div>
   );
 }

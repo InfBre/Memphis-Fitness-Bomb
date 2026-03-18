@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { ReactNode } from "react";
+import { ReactNode, CSSProperties } from "react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -14,9 +14,10 @@ interface MemphisButtonProps {
   color?: "mint" | "coral" | "lavender" | "lemon" | "white";
   type?: "button" | "submit";
   key?: string | number;
+  style?: CSSProperties;
 }
 
-export default function MemphisButton({ children, onClick, className, color = "white", type = "button" }: MemphisButtonProps) {
+export default function MemphisButton({ children, onClick, className, color = "white", type = "button", style }: MemphisButtonProps) {
   const colorClasses = {
     mint: "bg-mint",
     coral: "bg-coral",
@@ -29,6 +30,7 @@ export default function MemphisButton({ children, onClick, className, color = "w
     <motion.button
       type={type}
       onClick={onClick}
+      style={style}
       whileHover={{ scale: 1.05, x: -4, y: -4 }}
       whileTap={{ scale: 0.95, x: 4, y: 4 }}
       transition={{ type: "spring", stiffness: 400, damping: 10 }}

@@ -11,6 +11,7 @@ export interface ExerciseEntry {
   userName: string;
   type: string;
   duration: number; // in minutes
+  calories?: number;
   timestamp: number;
   likes?: string[]; // userIds
   comments?: Comment[];

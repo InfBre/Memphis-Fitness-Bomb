@@ -99,7 +99,7 @@ export default function App() {
     }
   };
 
-  const addExercise = async (type: string, duration: number, timestamp: number) => {
+  const addExercise = async (type: string, duration: number, timestamp: number, calories?: number) => {
     if (!user) return;
     const path = "exercises";
     try {
@@ -108,6 +108,7 @@ export default function App() {
         userName: userProfile?.displayName || user.displayName || "Anonymous",
         type,
         duration,
+        calories: calories || 0,
         timestamp,
       });
     } catch (error) {
@@ -202,7 +203,7 @@ export default function App() {
           setActiveTab={setActiveTab}
         />
 
-        <main className="max-w-7xl mx-auto pb-20">
+        <main className="max-w-7xl mx-auto pb-4 pt-4">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
@@ -216,12 +217,15 @@ export default function App() {
                   exercises={exercises} 
                   weights={weights} 
                   userId={user?.uid} 
-                  onDeleteExercise={deleteExercise}
-                  onDeleteWeight={deleteWeight}
                 />
               )}
               {activeTab === "log" && (
-                <LogForm onAddExercise={addExercise} onAddWeight={addWeight} />
+                <LogForm 
+                  exercises={exercises}
+                  onAddExercise={addExercise} 
+                  onAddWeight={addWeight} 
+                  onDeleteExercise={deleteExercise}
+                />
               )}
               {activeTab === "social" && (
                 <Social 

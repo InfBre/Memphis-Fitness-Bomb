@@ -17,6 +17,23 @@ export default function Social({ recentActivities, currentUser, onLike, onAddCom
   const [commentText, setCommentText] = useState<{ [key: string]: string }>({});
   const [showComments, setShowComments] = useState<{ [key: string]: boolean }>({});
 
+  // Calculate Leaderboard (Top 3 by duration)
+  const userStats = recentActivities.reduce((acc: { [key: string]: { name: string, duration: number, count: number } }, curr) => {
+    if (!acc[curr.userId]) {
+      acc[curr.userId] = { name: curr.userName || "Anonymous", duration: 0, count: 0 };
+    }
+    acc[curr.userId].duration += curr.duration;
+    acc[curr.userId].count += 1;
+    return acc;
+  }, {});
+
+  const leaderboard = Object.values(userStats)
+    .sort((a, b) => b.duration - a.duration)
+    .slice(0, 3);
+
+  const totalCommunityDuration = recentActivities.reduce((acc, curr) => acc + curr.duration, 0);
+  const totalCommunityWorkouts = recentActivities.length;
+
   const handleCommentSubmit = (e: React.FormEvent, activityId: string) => {
     e.preventDefault();
     const text = commentText[activityId];
@@ -27,13 +44,68 @@ export default function Social({ recentActivities, currentUser, onLike, onAddCom
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-8">
-      <h2 className="text-4xl font-black uppercase tracking-tighter text-center -rotate-1">
-        Community <span className="text-coral">Hype</span>
-      </h2>
+    <div className="p-6 max-w-6xl mx-auto space-y-12">
+      <div className="text-center space-y-4">
+        <h2 className="text-6xl font-black uppercase tracking-tighter -rotate-1">
+          Community <span className="text-coral">Hype</span>
+        </h2>
+        <p className="font-bold uppercase tracking-widest text-sm opacity-60 italic">Connect • Compete • Conquer</p>
+      </div>
+
+      {/* Community Stats & Leaderboard Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Global Stats */}
+        <MemphisCard color="lemon" className="-rotate-1 flex flex-col justify-center p-8">
+          <h3 className="text-2xl font-black uppercase mb-6 border-b-4 border-black pb-2">Global Impact</h3>
+          <div className="space-y-6">
+            <div>
+              <p className="text-xs font-black uppercase opacity-60">Total Minutes Moved</p>
+              <p className="text-5xl font-black tracking-tighter">{totalCommunityDuration}</p>
+            </div>
+            <div>
+              <p className="text-xs font-black uppercase opacity-60">Workouts Logged</p>
+              <p className="text-5xl font-black tracking-tighter">{totalCommunityWorkouts}</p>
+            </div>
+          </div>
+        </MemphisCard>
+
+        {/* Leaderboard */}
+        <MemphisCard color="white" className="lg:col-span-2 rotate-1 p-8">
+          <h3 className="text-2xl font-black uppercase mb-6 flex items-center gap-3">
+            <span className="bg-coral text-white p-1 border-2 border-black">TOP</span> 
+            Performers This Month
+          </h3>
+          <div className="space-y-4">
+            {leaderboard.map((user, idx) => (
+              <div key={idx} className="flex items-center gap-4 bg-black/5 p-4 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                <div className={`w-12 h-12 flex items-center justify-center font-black text-2xl border-4 border-black ${idx === 0 ? 'bg-lemon' : idx === 1 ? 'bg-mint' : 'bg-coral'}`}>
+                  {idx + 1}
+                </div>
+                <div className="flex-1">
+                  <p className="font-black uppercase text-xl">{user.name}</p>
+                  <p className="text-sm font-bold opacity-60">{user.count} WORKOUTS</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-black text-2xl tracking-tighter">{user.duration}</p>
+                  <p className="text-xs font-black uppercase">MINUTES</p>
+                </div>
+              </div>
+            ))}
+            {leaderboard.length === 0 && (
+              <p className="text-center py-8 font-bold opacity-40 uppercase italic">Waiting for champions to emerge...</p>
+            )}
+          </div>
+        </MemphisCard>
+      </div>
       
-      <div className="grid grid-cols-1 gap-8">
-        {recentActivities.map((activity, i) => {
+      <div className="space-y-8">
+        <h3 className="text-3xl font-black uppercase tracking-tighter flex items-center gap-4">
+          <div className="h-1 flex-1 bg-black"></div>
+          Recent Activity
+          <div className="h-1 flex-1 bg-black"></div>
+        </h3>
+        <div className="grid grid-cols-1 gap-8 max-w-4xl mx-auto">
+          {recentActivities.map((activity, i) => {
           const isLiked = currentUser ? activity.likes?.includes(currentUser.uid) : false;
           const likesCount = activity.likes?.length || 0;
           const commentsCount = activity.comments?.length || 0;
@@ -135,6 +207,7 @@ export default function Social({ recentActivities, currentUser, onLike, onAddCom
             </MemphisCard>
           );
         })}
+        </div>
       </div>
     </div>
   );
