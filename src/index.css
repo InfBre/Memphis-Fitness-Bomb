@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+@theme {
+  --color-mint: #AAF0D1;
+  --color-coral: #FF7F50;
+  --color-lavender: #E6E6FA;
+  --color-lemon: #FFF700;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-lavender text-black overflow-x-hidden;
+    font-family: var(--font-sans);
+  }
+}
+
+@layer components {
+  .memphis-card {
+    @apply bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all duration-200;
+  }
+  
+  .memphis-card:hover {
+    @apply -translate-x-1 -translate-y-1 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)];
+  }
+
+  .memphis-button {
+    @apply px-6 py-3 border-4 border-black font-bold uppercase tracking-wider transition-all duration-200 active:translate-x-1 active:translate-y-1 active:shadow-none;
+  }
+
+  .memphis-input {
+    @apply w-full p-3 border-4 border-black bg-white focus:outline-none focus:bg-lemon transition-colors;
+  }
+}
+
+.bg-pattern {
+  background-image: radial-gradient(circle, #000 2px, transparent 2px);
+  background-size: 30px 30px;
+}
+
+@keyframes rotate-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-rotate-slow {
+  animation: rotate-slow 20s linear infinite;
+}

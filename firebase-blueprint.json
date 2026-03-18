@@ -1,0 +1,69 @@
+{
+  "entities": {
+    "ExerciseEntry": {
+      "title": "Exercise Entry",
+      "description": "A record of a single exercise activity.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The UID of the user who performed the exercise." },
+        "userName": { "type": "string", "description": "The display name of the user." },
+        "type": { "type": "string", "description": "The type of exercise (e.g., Running, Yoga)." },
+        "duration": { "type": "integer", "description": "Duration in minutes." },
+        "timestamp": { "type": "integer", "description": "Unix timestamp of the activity." },
+        "likes": { "type": "array", "items": { "type": "string" }, "description": "List of user UIDs who liked this activity." },
+        "comments": { 
+          "type": "array", 
+          "items": { 
+            "type": "object",
+            "properties": {
+              "userId": { "type": "string" },
+              "userName": { "type": "string" },
+              "text": { "type": "string" },
+              "timestamp": { "type": "integer" }
+            }
+          },
+          "description": "List of comments on this activity."
+        }
+      },
+      "required": ["userId", "userName", "type", "duration", "timestamp"]
+    },
+    "WeightEntry": {
+      "title": "Weight Entry",
+      "description": "A record of a user's weight at a specific time.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The UID of the user." },
+        "userName": { "type": "string", "description": "The display name of the user." },
+        "weight": { "type": "number", "description": "Weight in kg." },
+        "timestamp": { "type": "integer", "description": "Unix timestamp of the measurement." }
+      },
+      "required": ["userId", "userName", "weight", "timestamp"]
+    },
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Public profile information for a user.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The unique identifier for the user." },
+        "displayName": { "type": "string", "description": "The user's display name." },
+        "photoURL": { "type": "string", "description": "URL to the user's profile photo." },
+        "role": { "type": "string", "enum": ["user", "admin"], "description": "The user's role in the application." }
+      },
+      "required": ["uid", "displayName", "role"]
+    }
+  },
+  "firestore": {
+    "/exercises/{exerciseId}": {
+      "schema": "ExerciseEntry",
+      "description": "Collection of all exercise activities."
+    },
+    "/weights/{weightId}": {
+      "schema": "WeightEntry",
+      "description": "Collection of all weight measurements."
+    },
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Collection of user profiles."
+    }
+  }
+}
